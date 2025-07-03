@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AuraVoice</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+        :root {
+            --primary-bg: #121212;
+            --secondary-bg: #1e1e1e;
+            --accent-colour: #bb86fc;
+            --accent-colour-light: #d6baff;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --record-colour: #ff4d4d;
+        }
+
+        /* --- CSS Reset for Mobile Consistency --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        /* --- End Reset --- */
+
+        html { height: 100%; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
+            height: 100%; width: 100%;
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100%; height: 100%;
+            background-color: var(--secondary-bg);
+            overflow: hidden; position: relative;
+            display: flex; flex-direction: column;
+        }
+
+        .centered-logo {
+            width: 60px; height: 60px;
+            border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--accent-colour);
+            margin-bottom: 15px; flex-shrink: 0;
+        }
+
+        .screen {
+            padding: 20px; box-sizing: border-box;
+            display: none; flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+            overflow: hidden; /* Parent screen doesn't scroll */
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .screen.active { display: flex; }
+        
+        .results-page {
+            display: none; width: 100%;
+            flex-direction: column; align-items: center;
+            justify-content: center; /* Vertically center content on each small page */
+            flex-grow: 1;
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+        }
+        .results-page.active { display: flex; }
+        
+        h1 { font-weight: 900; font-size: clamp(1.8em, 8vw, 2.5em); color: var(--accent-colour); margin-bottom: 10px; }
+        h2 { font-weight: 700; font-size: clamp(1.3em, 6vw, 1.8em); margin-bottom: 15px; }
+        h3 { font-weight: 700; color: var(--accent-colour); padding-top: 15px; margin-top: 15px; font-size: clamp(1.1em, 5vw, 1.3em); }
+        p { color: var(--text-secondary); font-size: clamp(0.9em, 3.5vw, 1em); line-height: 1.6; max-width: 90%; margin-top: 10px; }
+        .free-notice { font-weight: 700; color: var(--text-primary); margin-top: 10px; }
+
+        .button {
+            background: linear-gradient(90deg, #6200ee, var(--accent-colour));
+            color: #fff; font-size: clamp(1em, 4.5vw, 1.1em); font-weight: 700;
+            padding: 15px 30px; border-radius: 50px; border: none;
+            cursor: pointer; margin-top: 20px; flex-shrink: 0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .button:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(187, 134, 252, 0.6); }
+
+        .nav-button { background: transparent; border: 2px solid var(--accent-colour-light); color: var(--accent-colour-light); padding: 10px 25px; }
+        .nav-container { display: flex; justify-content: space-between; width: 90%; margin-top: auto; padding-top: 20px; flex-shrink: 0; }
+        
+        #credits { font-size: 0.8em; color: #888; margin-top: auto; padding-top: 20px; flex-shrink: 0; }
+        #prompt-box { border: 2px solid var(--accent-colour); border-radius: 15px; padding: 20px; margin: 20px 0; font-style: italic; }
+        #record-button { width: 100px; height: 100px; border-radius: 50%; background-color: var(--record-colour); border: 5px solid #fff; cursor: pointer; margin-top: 20px; box-shadow: 0 0 20px rgba(255, 77, 77, 0.5); }
+        #record-button::before { content: '🎤'; font-size: 3em; line-height: 90px; }
+
+        #analysis-content, #recording-container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; flex-grow: 1; }
+        #recording-container { display: none; }
+
+        #wave-visualizer { display: flex; justify-content: center; align-items: center; height: 60px; margin-top: 20px; }
+        .wave-bar {
+            width: 8px; height: 10px; margin: 0 4px;
+            background-color: var(--record-colour); border-radius: 4px;
+            animation: wave-pulse 1.2s infinite ease-in-out;
+        }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes wave-pulse { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(5); } }
+
+        #reveal-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--secondary-bg); z-index: 10; }
+        #reveal-name { opacity: 0; transform: scale(0.8); animation: revealName 1.5s forwards ease-out; animation-delay: 0.5s; font-size: clamp(1.5em, 7vw, 2.2em);}
+        @keyframes revealName { to { opacity: 1; transform: scale(1); } }
+        
+        .attribute { width: 90%; margin: 8px 0; text-align: left; font-size: 0.9em; }
+        .attr-name { display: inline-block; width: 110px; }
+        .progress-bar { display: inline-block; width: calc(100% - 140px); background: #333; height: 20px; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #6200ee, var(--accent-colour)); transition: width 1s ease-in-out 0.3s; }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="welcome-screen" class="screen active">
+            <img src="pirate.jpg" alt="Logo" class="centered-logo">
+            <h1>AuraVoice</h1>
+            <p>La tua voce è più di un suono, è la tua firma unica. Analizziamo i tuoi schemi vocali per rivelare il tuo archetipo di comunicazione principale.</p>
+            <p class="free-notice">Questa applicazione è 100% gratuita.</p>
+            <button id="begin-btn" class="button">Avvia l'Analisi</button>
+            <div id="credits">Ideato e Sviluppato da: Panagiotis Domvros, Insegnante di Inglese e Teatro, Tutti i diritti riservati</div>
+        </div>
+
+        <div id="analysis-screen" class="screen">
+            <div id="analysis-content">
+                <img src="pirate.jpg" alt="Logo" class="centered-logo">
+                <p>Per calibrare l'analizzatore, leggi la seguente frase ad alta voce:</p>
+                <div id="prompt-box"></div>
+                <p>Premi il pulsante per registrare.</p>
+                <div id="record-button"></div>
+            </div>
+            <div id="recording-container">
+                <img src="pirate.jpg" alt="Logo" class="centered-logo">
+                <p id="recording-prompt-text" style="font-style: italic; color: var(--accent-colour-light)"></p>
+                <div id="wave-visualizer">
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                </div>
+                <p class="loader-text" style="text-align: center; margin-top: 10px;">Registrazione in corso...</p>
+            </div>
+        </div>
+        
+        <div id="reveal-screen" class="screen">
+            <img src="pirate.jpg" alt="Logo" class="centered-logo">
+            <p>Il tuo tipo di voce è:</p>
+            <h1 id="reveal-name" class="revealed-name"></h1>
+        </div>
+
+        <div id="results-screen" class="screen">
+            <div id="results-content" style="display: flex; flex-direction: column; align-items: center; flex-grow: 1; width: 100%;">
+                <div id="results-page-1" class="results-page">
+                    <img src="pirate.jpg" alt="Logo" class="centered-logo">
+                    <h2 id="result-title"></h2>
+                    <p id="core-statement"></p>
+                    <div class="attribute"><span class="attr-name">Empatia</span><div class="progress-bar"><div id="empathy-bar" class="progress-fill"></div></div></div>
+                    <div class="attribute"><span class="attr-name">Abilità</span><div class="progress-bar"><div id="skills-bar" class="progress-fill"></div></div></div>
+                    <div class="attribute"><span class="attr-name">Indipendenza</span><div class="progress-bar"><div id="independence-bar" class="progress-fill"></div></div></div>
+                    <div class="attribute"><span class="attr-name">Saggezza</span><div class="progress-bar"><div id="wisdom-bar" class="progress-fill"></div></div></div>
+                    <div class="attribute"><span class="attr-name">Creatività</span><div class="progress-bar"><div id="creativity-bar" class="progress-fill"></div></div></div>
+                </div>
+                <div id="results-page-2" class="results-page">
+                    <img src="pirate.jpg" alt="Logo" class="centered-logo">
+                    <h3>Il Tuo Superpotere</h3><p id="result-superpower"></p>
+                </div>
+                <div id="results-page-3" class="results-page">
+                    <img src="pirate.jpg" alt="Logo" class="centered-logo">
+                    <h3>Come Ti Connetti</h3><p id="result-connect"></p>
+                </div>
+                <div id="results-page-4" class="results-page">
+                    <img src="pirate.jpg" alt="Logo" class="centered-logo">
+                    <h3>Potenziali Punti Ciechi</h3><p id="result-blindspot"></p>
+                </div>
+                <div id="results-page-5" class="results-page">
+                    <img src="pirate.jpg" alt="Logo" class="centered-logo">
+                    <h3>Esempi di Archetipi</h3><p id="result-examples"></p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button id="back-btn" class="button nav-button" style="visibility: hidden;">Indietro</button>
+                <button id="next-btn" class="button nav-button">Avanti</button>
+            </div>
+             <button id="restart-btn" class="button" style="display:none;">Analizza di Nuovo</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const profiles = [
+                { masc: "Il Comandante", fem: "La Comandante", statement: "Sei lo/la stratega deciso/a, che parla con un'autorità che cattura l'attenzione e ispira all'azione.", attributes: { empathy: 11, skills: 7, independence: 42, wisdom: 37, creativity: 3 }, superpower: "La tua voce ha un innato senso della direzione. Quando parli, la gente ascolta perché proietti sicurezza e una visione chiara.", connect: "Costruisci il rispetto attraverso la competenza e i risultati. Gli altri si fidano del tuo giudizio e della tua capacità di guidarli verso un obiettivo comune.", blindspot: "La tua concentrazione sulla missione a volte può mettere in ombra le persone che la realizzano. Potresti essere percepito/a come distaccato/a se non riconosci consapevolmente i bisogni emotivi della tua squadra.", examples: "Esempi: Giulio Cesare, Margaret Thatcher, Napoleone Bonaparte, Darth Vader, Tywin Lannister." },
+                { masc: "Il Leader", fem: "La Leader", statement: "Sei l'unificatore/trice che ispira, bilanciando autorità ed empatia per radunare le persone attorno a una causa comune.", attributes: { empathy: 27, skills: 1, independence: 42, wisdom: 27, creativity: 3 }, superpower: "Possiedi una rara miscela di forza e calore. La tua voce può articolare una visione potente, trasmettendo allo stesso tempo che ti preoccupi sinceramente delle persone che guidi.", connect: "Ti connetti mostrando alle persone che sono viste e apprezzate. Ascolti le loro preoccupazioni e allinei le motivazioni personali con gli obiettivi del gruppo.", blindspot: "Il desiderio di essere sia un(a) leader forte che un(a) amico/a empatico/a può essere estenuante. Potresti avere difficoltà a prendere decisioni impopolari che sai che feriranno le persone.", examples: "Esempi: Martin Luther King Jr., Regina Elisabetta I, Barack Obama, Mufasa, Jean-Luc Picard." },
+                { masc: "Il Seduttore", fem: "La Seduttrice", statement: "Sei l'affascinante e carismatico/a seduttore/trice, che usa una miscela magnetica di sicurezza e creatività per attrarre e conquistare le persone.", attributes: { empathy: 24, skills: 11, independence: 24, wisdom: 18, creativity: 20 }, superpower: "La tua voce ha una qualità seducente. Sai esattamente cosa dire per far sentire gli altri speciali. Eccelli nel creare un rapporto immediato.", connect: "Ti connetti concentrandoti intensamente sull'altra persona, usando empatia e arguzia per creare un legame potente e personale.", blindspot: "Il tuo fascino può essere percepito come manipolatorio se non è supportato da un'intenzione sincera. Le persone potrebbero dubitare che il tuo interesse sia autentico.", examples: "Esempi: Giacomo Casanova, Cleopatra, James Bond, Don Draper, Jessica Rabbit." },
+                { masc: "Il Narratore", fem: "La Narratrice", statement: "Sei il/la tessitore/trice di narrazioni, usando immagini vivide e risonanza emotiva per rendere le idee indimenticabili.", attributes: { empathy: 49, skills: 16, independence: 12, wisdom: 4, creativity: 19 }, superpower: "Non ti limiti a enunciare fatti; dipingi immagini con le tue parole. Hai una comprensione intuitiva della trama, dei personaggi ו delle emozioni.", connect: "Ti connetti attraverso l'esperienza umana condivisa. Raccontando storie, crei un terreno comune in cui gli ascoltatori si riconoscono nella narrazione.", blindspot: "A volte potresti preferire una buona storia ai dati concreti, semplificando potenzialmente questioni complesse. Assicurati che le tue narrazioni siano ancorate alla realtà.", examples: "Esempi: Omero, Walt Disney, J.K. Rowling, Stephen King, Ira Glass." },
+                { masc: "Il Diplomatico", fem: "La Diplomatica", statement: "Sei il/la mediatore/trice elegante, che gestisce i conflitti con tatto, saggezza e una notevole compostezza.", attributes: { empathy: 12, skills: 9, independence: 38, wisdom: 32, creativity: 1 }, superpower: "Possiedi una presenza calmante e oggettiva. Puoi ascoltare tutte le parti di una discussione senza essere coinvolto/a emotivamente.", connect: "Costruisci legami attraverso la stabilità e l'equità. Le persone si fidano di te come forza neutrale e razionale.", blindspot: "La tua focalizzazione sulla neutralità può essere erroneamente interpretata come una mancanza di passione. A volte, potrebbe essere necessario prendere una posizione decisa invece di cercare un compromesso.", examples: "Esempi: Nelson Mandela, Principessa Leia, Kofi Annan, Atticus Finch." },
+                { masc: "Il Divulgatore", fem: "La Divulgatrice", statement: "Sei la voce chiara e coinvolgente del pubblico, abile nel rendere le informazioni complesse accessibili e interessanti per tutti.", attributes: { empathy: 50, skills: 10, independence: 12, wisdom: 8, creativity: 21 }, superpower: "Hai un talento per la chiarezza. Puoi prendere un argomento denso e scomporlo in parti digeribili e attraenti per un vasto pubblico.", connect: "Ti connetti essendo una fonte di informazioni affidabile e alla mano. Il tuo pubblico prova un senso di familiarità e fiducia nei tuoi confronti.", blindspot: "Nel tentativo di piacere a un vasto pubblico, a volte potresti semplificare eccessivamente o evitare sfumature controverse.", examples: "Esempi: Oprah Winfrey, David Attenborough, Piero Angela, Anderson Cooper." },
+                { masc: "Il Mentore", fem: "La Mentore", statement: "Sei la mano ferma e la luce guida, che conduce con esperienza e pacata sicurezza per favorire la crescita degli altri.", attributes: { empathy: 8, skills: 11, independence: 54, wisdom: 19, creativity: 8 }, superpower: "La tua più grande forza è la tua vasta esperienza. Fornisci una guida forgiata da sfide e successi del mondo reale.", connect: "Crei legami essendo una fonte di stabilità e conoscenza. Le persone sono naturalmente attratte da te per avere consigli.", blindspot: "La tua forte indipendenza a volte può essere percepita come distanza. Ricorda di condividere anche i tuoi sentimenti, non solo le tue lezioni.", examples: "Esempi: Yoda, Gandalf, Albus Silente, Maestro Miyagi, Zio Iroh." },
+                { masc: "L'Influencer", fem: "L'Influencer", statement: "Sei il/la trendsetter magnetico/a, che canalizza creatività ed empatia per costruire una community attorno a una passione comune.", attributes: { empathy: 40, skills: 2, independence: 7, wisdom: 11, creativity: 40 }, superpower: "Hai il polso della situazione su ciò che sta per arrivare. Combini un occhio acuto per le tendenze con una voce autentica e riconoscibile.", connect: "Ti connetti creando e condividendo contenuti che risuonano a livello personale, facendo sentire i tuoi follower come amici.", blindspot: "L'attenzione alle tendenze e al coinvolgimento del pubblico può portare alla pressione di mantenere una certa immagine, che può sembrare poco autentica nel tempo.", examples: "Esempi: Kim Kardashian, MrBeast, Chiara Ferragni, Addison Rae." },
+                { masc: "L'Analista", fem: "L'Analista", statement: "Sei il/la detective acuto/a, che usa logica e saggezza per scoprire schemi nascosti e verità che altri non vedono.", attributes: { empathy: 12, skills: 1, independence: 33, wisdom: 39, creativity: 24 }, superpower: "La tua mente è uno strumento di pensiero critico finemente sintonizzato. Puoi assorbire enormi quantità di dati e separare il segnale dal rumore.", connect: "Ti connetti con gli altri attraverso il rispetto intellettuale. Le persone sono attratte dalla chiarezza e dalla profondità delle tue intuizioni.", blindspot: "Potresti sentirti frustrato/a da coloro che si affidano alle emozioni piuttosto che ai dati. La tua comunicazione a volte può essere percepita come fredda.", examples: "Esempi: Sherlock Holmes, Spock, Batman, Dr. House, Nate Silver." },
+                { masc: "Il Visionario", fem: "La Visionaria", statement: "Sei la scintilla brillante dell'innovazione, che dipinge immagini mozzafiato del futuro con una voce piena di creatività sconfinata.", attributes: { empathy: 22, skills: 2, independence: 5, wisdom: 12, creativity: 59 }, superpower: "Vedi ciò che potrebbe essere. La tua mente opera su un altro piano, collegando idee disparate per generare concetti rivoluzionari.", connect: "Ti connetti invitando le persone nel tuo futuro immaginato, ispirandole a credere in un mondo migliore e più eccitante.", blindspot: "Le tue idee possono essere così in anticipo sui tempi che le persone faticano a capirle. Potrebbe essere necessario collaborare con tipi più pratici.", examples: "Esempi: Steve Jobs, Leonardo da Vinci, Elon Musk, Nikola Tesla, Walt Disney." },
+                { masc: "Il Consolatore", fem: "La Consolatrice", statement: "Sei la presenza calda e rassicurante, che crea un porto sicuro con una voce di empatia pura e incondizionata.", attributes: { empathy: 63, skills: 13, independence: 8, wisdom: 10, creativity: 6 }, superpower: "La tua voce è un balsamo. Hai una straordinaria capacità di ascoltare senza giudicare e di far sentire le persone al sicuro, ascoltate e convalidate.", connect: "Ti connetti attraverso la tua genuina cura per il benessere degli altri. Offri supporto liberamente e crei legami profondi e di fiducia.", blindspot: "La tua immensa empatia può portare all'esaurimento emotivo. Potresti anche avere difficoltà a esprimere critiche necessarie per paura di ferire qualcuno.", examples: "Esempi: Fred Rogers, Samvise Gamgee, Baymax, Hagrid." },
+                { masc: "Il Novizio", fem: "La Novizia", statement: "Sei la voce entusiasta e in via di sviluppo, piena di potenziale e di un'energia creativa che sta appena iniziando a trovare la sua forma.", attributes: { empathy: 8, skills: 23, independence: 9, wisdom: 15, creativity: 45 }, superpower: "Il tuo superpotere è il tuo potenziale. Ti avvicini al mondo con occhi nuovi e un'entusiastica voglia di imparare e provare cose nuove.", connect: "Ti connetti attraverso il tuo entusiasmo e la tua curiosità. Le persone sono attratte dalla tua energia positiva e dalla tua volontà di fare domande.", blindspot: "La tua mancanza di esperienza significa che le tue idee a volte possono essere poco pratiche. È fondamentale per te cercare dei mentori.", examples: "Esempi: Luke Skywalker (Una nuova speranza), Spider-Man (agli inizi), Harry Potter (primo anno)." }
+            ];
+            const prompts = ["La creatività è l'intelligenza che si diverte.", "La mente più saggia ha sempre qualcosa da imparare.", "Di' la verità, anche se la tua voce trema."];
+            
+            const screens = { welcome: document.getElementById('welcome-screen'), analysis: document.getElementById('analysis-screen'), reveal: document.getElementById('reveal-screen'), results: document.getElementById('results-screen') };
+            const elements = {
+                beginBtn: document.getElementById('begin-btn'), recordBtn: document.getElementById('record-button'), restartBtn: document.getElementById('restart-btn'),
+                promptBox: document.getElementById('prompt-box'), analysisContent: document.getElementById('analysis-content'),
+                recordingContainer: document.getElementById('recording-container'), recordingPromptText: document.getElementById('recording-prompt-text'),
+                nextBtn: document.getElementById('next-btn'), backBtn: document.getElementById('back-btn')
+            };
+
+            let currentProfile, currentResultPage;
+
+            function switchScreen(screenToShow) {
+                for (const screen in screens) { screens[screen].classList.remove('active'); }
+                screens[screenToShow].classList.add('active');
+            }
+
+            elements.beginBtn.addEventListener('click', () => {
+                const promptText = prompts[Math.floor(Math.random() * prompts.length)];
+                elements.promptBox.innerText = promptText;
+                elements.recordingPromptText.innerText = `"${promptText}"`;
+                elements.analysisContent.style.display = 'flex';
+                elements.recordingContainer.style.display = 'none';
+                switchScreen('analysis');
+            });
+
+            elements.recordBtn.addEventListener('click', () => {
+                elements.analysisContent.style.display = 'none';
+                elements.recordingContainer.style.display = 'flex';
+                setTimeout(startReveal, 5000);
+            });
+
+            function startReveal() {
+                currentProfile = profiles[Math.floor(Math.random() * profiles.length)];
+                document.getElementById('reveal-name').innerText = `${currentProfile.masc} / ${currentProfile.fem}`;
+                switchScreen('reveal');
+                setTimeout(showFullResults, 2500);
+            }
+            
+            function showFullResults() {
+                document.getElementById('result-title').innerText = `Sei ${currentProfile.masc} / ${currentProfile.fem}`;
+                document.getElementById('core-statement').innerText = currentProfile.statement;
+                for (const attr in currentProfile.attributes) {
+                    document.getElementById(`${attr}-bar`).style.width = currentProfile.attributes[attr] + '%';
+                }
+                document.getElementById('result-superpower').innerText = currentProfile.superpower;
+                document.getElementById('result-connect').innerText = currentProfile.connect;
+                document.getElementById('result-blindspot').innerText = currentProfile.blindspot;
+                document.getElementById('result-examples').innerText = currentProfile.examples;
+                
+                currentResultPage = 1;
+                updateResultPage();
+                switchScreen('results');
+            }
+
+            function updateResultPage() {
+                const totalPages = 5;
+                for (let i = 1; i <= totalPages; i++) {
+                    document.getElementById(`results-page-${i}`).classList.remove('active');
+                }
+                document.getElementById(`results-page-${currentResultPage}`).classList.add('active');
+                
+                elements.backBtn.style.visibility = (currentResultPage === 1) ? 'hidden' : 'visible';
+                elements.nextBtn.style.visibility = (currentResultPage === totalPages) ? 'hidden' : 'visible';
+                
+                const finalButtonsVisible = currentResultPage === totalPages;
+                elements.restartBtn.style.display = finalButtonsVisible ? 'block' : 'none';
+                elements.nextBtn.style.display = finalButtonsVisible ? 'none' : 'block';
+            }
+
+            elements.nextBtn.addEventListener('click', () => {
+                if (currentResultPage < 5) { currentResultPage++; updateResultPage(); }
+            });
+
+            elements.backBtn.addEventListener('click', () => {
+                if (currentResultPage > 1) { currentResultPage--; updateResultPage(); }
+            });
+            
+            elements.restartBtn.addEventListener('click', () => switchScreen('welcome'));
+        });
+    </script>
+</body>
+</html>
