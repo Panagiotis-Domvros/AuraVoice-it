@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>AuraVoice</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -17,28 +17,28 @@
             --record-colour: #ff4d4d;
         }
 
-        /* --- CSS Reset for Mobile Consistency --- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        /* --- End Reset --- */
 
         html { height: 100%; }
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--primary-bg);
             color: var(--text-primary);
-            height: 100%; width: 100%;
-            overflow: hidden;
+            width: 100%;
+            /* Changed: Allow body to have natural height for scrolling */
         }
 
         .app-container {
-            width: 100%; height: 100%;
+            width: 100%;
+            min-height: 100vh; /* Changed: Use min-height to allow container to grow */
             background-color: var(--secondary-bg);
-            overflow: hidden; position: relative;
-            display: flex; flex-direction: column;
+            position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .centered-logo {
@@ -53,7 +53,8 @@
             display: none; flex-direction: column;
             align-items: center;
             flex-grow: 1;
-            overflow: hidden; /* Parent screen doesn't scroll */
+            overflow-y: auto; /* Changed: Allow vertical scrolling within each screen */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
             text-align: center;
             animation: fadeIn 0.5s ease-in-out;
         }
@@ -65,10 +66,8 @@
         .results-page {
             display: none; width: 100%;
             flex-direction: column; align-items: center;
-            justify-content: center; /* Vertically center content on each small page */
+            justify-content: center;
             flex-grow: 1;
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch;
         }
         .results-page.active { display: flex; }
         
@@ -108,7 +107,6 @@
         .wave-bar:nth-child(3) { animation-delay: 0.2s; }
         .wave-bar:nth-child(4) { animation-delay: 0.3s; }
         .wave-bar:nth-child(5) { animation-delay: 0.4s; }
-
         @keyframes wave-pulse { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(5); } }
 
         #reveal-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--secondary-bg); z-index: 10; }
@@ -190,7 +188,7 @@
                 <button id="back-btn" class="button nav-button" style="visibility: hidden;">Indietro</button>
                 <button id="next-btn" class="button nav-button">Avanti</button>
             </div>
-             <button id="restart-btn" class="button" style="display:none;">Analizza di Nuovo</button>
+              <button id="restart-btn" class="button" style="display:none;">Analizza di Nuovo</button>
         </div>
     </div>
 
@@ -200,7 +198,8 @@
                 { masc: "Il Comandante", fem: "La Comandante", statement: "Sei lo/la stratega deciso/a, che parla con un'autorità che cattura l'attenzione e ispira all'azione.", attributes: { empathy: 11, skills: 7, independence: 42, wisdom: 37, creativity: 3 }, superpower: "La tua voce ha un innato senso della direzione. Quando parli, la gente ascolta perché proietti sicurezza e una visione chiara.", connect: "Costruisci il rispetto attraverso la competenza e i risultati. Gli altri si fidano del tuo giudizio e della tua capacità di guidarli verso un obiettivo comune.", blindspot: "La tua concentrazione sulla missione a volte può mettere in ombra le persone che la realizzano. Potresti essere percepito/a come distaccato/a se non riconosci consapevolmente i bisogni emotivi della tua squadra.", examples: "Esempi: Giulio Cesare, Margaret Thatcher, Napoleone Bonaparte, Darth Vader, Tywin Lannister." },
                 { masc: "Il Leader", fem: "La Leader", statement: "Sei l'unificatore/trice che ispira, bilanciando autorità ed empatia per radunare le persone attorno a una causa comune.", attributes: { empathy: 27, skills: 1, independence: 42, wisdom: 27, creativity: 3 }, superpower: "Possiedi una rara miscela di forza e calore. La tua voce può articolare una visione potente, trasmettendo allo stesso tempo che ti preoccupi sinceramente delle persone che guidi.", connect: "Ti connetti mostrando alle persone che sono viste e apprezzate. Ascolti le loro preoccupazioni e allinei le motivazioni personali con gli obiettivi del gruppo.", blindspot: "Il desiderio di essere sia un(a) leader forte che un(a) amico/a empatico/a può essere estenuante. Potresti avere difficoltà a prendere decisioni impopolari che sai che feriranno le persone.", examples: "Esempi: Martin Luther King Jr., Regina Elisabetta I, Barack Obama, Mufasa, Jean-Luc Picard." },
                 { masc: "Il Seduttore", fem: "La Seduttrice", statement: "Sei l'affascinante e carismatico/a seduttore/trice, che usa una miscela magnetica di sicurezza e creatività per attrarre e conquistare le persone.", attributes: { empathy: 24, skills: 11, independence: 24, wisdom: 18, creativity: 20 }, superpower: "La tua voce ha una qualità seducente. Sai esattamente cosa dire per far sentire gli altri speciali. Eccelli nel creare un rapporto immediato.", connect: "Ti connetti concentrandoti intensamente sull'altra persona, usando empatia e arguzia per creare un legame potente e personale.", blindspot: "Il tuo fascino può essere percepito come manipolatorio se non è supportato da un'intenzione sincera. Le persone potrebbero dubitare che il tuo interesse sia autentico.", examples: "Esempi: Giacomo Casanova, Cleopatra, James Bond, Don Draper, Jessica Rabbit." },
-                { masc: "Il Narratore", fem: "La Narratrice", statement: "Sei il/la tessitore/trice di narrazioni, usando immagini vivide e risonanza emotiva per rendere le idee indimenticabili.", attributes: { empathy: 49, skills: 16, independence: 12, wisdom: 4, creativity: 19 }, superpower: "Non ti limiti a enunciare fatti; dipingi immagini con le tue parole. Hai una comprensione intuitiva della trama, dei personaggi ו delle emozioni.", connect: "Ti connetti attraverso l'esperienza umana condivisa. Raccontando storie, crei un terreno comune in cui gli ascoltatori si riconoscono nella narrazione.", blindspot: "A volte potresti preferire una buona storia ai dati concreti, semplificando potenzialmente questioni complesse. Assicurati che le tue narrazioni siano ancorate alla realtà.", examples: "Esempi: Omero, Walt Disney, J.K. Rowling, Stephen King, Ira Glass." },
+                // The line below contained a syntax error ('ו' instead of 'e'). I have corrected it.
+                { masc: "Il Narratore", fem: "La Narratrice", statement: "Sei il/la tessitore/trice di narrazioni, usando immagini vivide e risonanza emotiva per rendere le idee indimenticabili.", attributes: { empathy: 49, skills: 16, independence: 12, wisdom: 4, creativity: 19 }, superpower: "Non ti limiti a enunciare fatti; dipingi immagini con le tue parole. Hai una comprensione intuitiva della trama, dei personaggi e delle emozioni.", connect: "Ti connetti attraverso l'esperienza umana condivisa. Raccontando storie, crei un terreno comune in cui gli ascoltatori si riconoscono nella narrazione.", blindspot: "A volte potresti preferire una buona storia ai dati concreti, semplificando potenzialmente questioni complesse. Assicurati che le tue narrazioni siano ancorate alla realtà.", examples: "Esempi: Omero, Walt Disney, J.K. Rowling, Stephen King, Ira Glass." },
                 { masc: "Il Diplomatico", fem: "La Diplomatica", statement: "Sei il/la mediatore/trice elegante, che gestisce i conflitti con tatto, saggezza e una notevole compostezza.", attributes: { empathy: 12, skills: 9, independence: 38, wisdom: 32, creativity: 1 }, superpower: "Possiedi una presenza calmante e oggettiva. Puoi ascoltare tutte le parti di una discussione senza essere coinvolto/a emotivamente.", connect: "Costruisci legami attraverso la stabilità e l'equità. Le persone si fidano di te come forza neutrale e razionale.", blindspot: "La tua focalizzazione sulla neutralità può essere erroneamente interpretata come una mancanza di passione. A volte, potrebbe essere necessario prendere una posizione decisa invece di cercare un compromesso.", examples: "Esempi: Nelson Mandela, Principessa Leia, Kofi Annan, Atticus Finch." },
                 { masc: "Il Divulgatore", fem: "La Divulgatrice", statement: "Sei la voce chiara e coinvolgente del pubblico, abile nel rendere le informazioni complesse accessibili e interessanti per tutti.", attributes: { empathy: 50, skills: 10, independence: 12, wisdom: 8, creativity: 21 }, superpower: "Hai un talento per la chiarezza. Puoi prendere un argomento denso e scomporlo in parti digeribili e attraenti per un vasto pubblico.", connect: "Ti connetti essendo una fonte di informazioni affidabile e alla mano. Il tuo pubblico prova un senso di familiarità e fiducia nei tuoi confronti.", blindspot: "Nel tentativo di piacere a un vasto pubblico, a volte potresti semplificare eccessivamente o evitare sfumature controverse.", examples: "Esempi: Oprah Winfrey, David Attenborough, Piero Angela, Anderson Cooper." },
                 { masc: "Il Mentore", fem: "La Mentore", statement: "Sei la mano ferma e la luce guida, che conduce con esperienza e pacata sicurezza per favorire la crescita degli altri.", attributes: { empathy: 8, skills: 11, independence: 54, wisdom: 19, creativity: 8 }, superpower: "La tua più grande forza è la tua vasta esperienza. Fornisci una guida forgiata da sfide e successi del mondo reale.", connect: "Crei legami essendo una fonte di stabilità e conoscenza. Le persone sono naturalmente attratte da te per avere consigli.", blindspot: "La tua forte indipendenza a volte può essere percepita come distanza. Ricorda di condividere anche i tuoi sentimenti, non solo le tue lezioni.", examples: "Esempi: Yoda, Gandalf, Albus Silente, Maestro Miyagi, Zio Iroh." },
